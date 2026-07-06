@@ -1,0 +1,27 @@
+# Build directories
+build-*/
+release/
+debug/
+Makefile
+Makefile.Debug
+Makefile.Release
+object_script.*
+*.o
+*.exe
+
+# Qt generated files
+*.pro.user
+.qmake.stash
+moc_*.cpp
+moc_predefs.h
+ui_*.h
+qrc_*.cpp
+
+# IDE
+.vscode/
+.idea/
+*.autosave
+
+# OS
+Thumbs.db
+.DS_Store
