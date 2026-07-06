@@ -24,19 +24,11 @@
 
 ## 系统架构
 
-```
-┌─────────────────────┐        ┌─────────────────────┐
-│     Client (Qt)      │  TCP   │     Server (Qt)      │
-│                      │◄──────►│                      │
-│  ┌───────────────┐   │  PDU   │  ┌───────────────┐   │
-│  │  Login/Regist  │   │ 协议   │  │  MyTcpServer   │   │
-│  │  Friend Page   │   │       │  │  ClientTask     │   │
-│  │  File Page     │   │       │  │  MsgHandler     │   │
-│  │  Chat Window   │   │       │  │  OperateDB      │───┼─── MySQL
-│  │  Upload Thread │   │       │  │  File System    │   │
-│  └───────────────┘   │        │  └───────────────┘   │
-└─────────────────────┘        └─────────────────────┘
-```
+系统分为客户端和服务端两部分，通过 TCP 长连接通信，使用自定义 PDU 二进制协议进行数据交换。
+
+客户端负责用户界面和交互逻辑，包含登录注册、好友管理、文件管理和聊天四个核心模块。文件上传采用独立工作线程，将大文件按 4096 字节分片后通过信号槽机制异步发送，避免阻塞 UI 主线程。
+
+服务端由 MyTcpServer 监听端口并接收连接，每个客户端连接分配一个 ClientTask（基于 QThreadPool 的 QRunnable 实现线程池管理）。ClientTask 中的 MyTcpSocket 负责该连接的消息收发，通过 MsgHandler 处理具体业务逻辑：用户与好友数据由 OperateDB 操作 MySQL 数据库，文件数据直接读写服务端文件系统。消息转发依托 MyTcpServer 维护的在线用户列表实现 P2P 投递。
 
 ---
 
@@ -113,27 +105,11 @@ cd Client && qmake Client.pro && mingw32-make
 
 ## 项目结构
 
-```
-qtprojects/
-├── Client/                 # 客户端
-│   ├── client.cpp/h        # 主窗口 + TCP 连接管理
-│   ├── index.cpp/h         # 首页（好友/文件页切换）
-│   ├── file.cpp/h          # 文件管理页
-│   ├── friend.cpp/h        # 好友管理页
-│   ├── chat.cpp/h          # 聊天窗口
-│   ├── onlineuser.cpp/h    # 在线用户列表
-│   ├── uploader.cpp/h      # 多线程文件上传器
-│   ├── reshandler.cpp/h    # 服务端响应处理器
-│   └── protocol.cpp/h      # 通信协议定义
-├── Server/                 # 服务端
-│   ├── server.cpp/h        # 服务端入口
-│   ├── mytcpserver.cpp/h   # TCP 服务器（线程池）
-│   ├── mytcpsocket.cpp/h   # 单连接消息处理
-│   ├── msghandler.cpp/h    # 消息业务逻辑
-│   ├── operatedb.cpp/h     # MySQL 数据库操作
-│   └── protocol.cpp/h      # 通信协议定义
-└── show/                   # 实验性窗口 demo
-```
+项目分为三个子目录。Client 目录包含客户端全部代码：`client.cpp/h` 管理 TCP 连接与登录窗口，`index.cpp/h` 为登录后的首页（通过 QStackedWidget 切换好友页和文件页），`file.cpp/h` 实现文件浏览、增删改查和上传下载，`friend.cpp/h` 管理好友列表与聊天入口，`chat.cpp/h` 为聊天窗口，`onlineuser.cpp/h` 显示在线用户列表，`uploader.cpp/h` 封装多线程分片上传逻辑，`reshandler.cpp/h` 分发处理服务端响应，`protocol.cpp/h` 定义 PDU 结构和消息类型枚举。
+
+Server 目录包含服务端全部代码：`server.cpp/h` 加载配置并启动监听，`mytcpserver.cpp/h` 基于 QTcpServer 管理连接和线程池，`mytcpsocket.cpp/h` 处理单连接的收发与粘包拆包，`msghandler.cpp/h` 为各消息类型的业务逻辑实现，`operatedb.cpp/h` 封装 MySQL 数据库操作（用户增删查、好友关系维护、在线状态管理），`protocol.cpp/h` 与客户端一致的协议定义。
+
+show 目录为一个独立的实验性 Qt 窗口 demo。
 
 ---
 
