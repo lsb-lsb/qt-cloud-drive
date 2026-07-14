@@ -147,29 +147,41 @@ cd Client && qmake Client.pro && mingw32-make
 ## 项目结构
 
 ```
-Client/              # 客户端
-├── client.cpp/h     # TCP 连接与登录窗口
-├── index.cpp/h      # 主界面（QStackedWidget 切换好友/文件页）
-├── file.cpp/h       # 文件浏览、增删改查、上传下载、安全检查
-├── friend.cpp/h     # 好友列表、聊天入口
-├── chat.cpp/h       # 聊天窗口
-├── onlineuser.cpp/h # 在线用户列表
-├── uploader.cpp/h   # 多线程分片上传
-├── reshandler.cpp/h # 服务端响应分发
-└── protocol.cpp/h   # PDU 协议定义
-
-Server/              # 服务端
-├── server.cpp/h     # 加载配置、启动监听
-├── mytcpserver.cpp/h # QTcpServer 连接管理与线程池
-├── mytcpsocket.cpp/h # 单连接收发与粘包拆包
-├── clienttask.cpp/h # 线程池任务封装
-├── msghandler.cpp/h # 全部消息类型业务逻辑
-├── operatedb.cpp/h  # MySQL 数据库操作（参数化查询）
-├── filescanner.cpp/h # 四层文件安全扫描（L1-L4）
-├── aichecker.cpp/h  # AI 深度内容分析（DeepSeek API）
-├── winhttpclient.cpp/h # WinHTTP HTTPS 封装（SChannel TLS）
-├── logger.cpp/h     # 线程安全日志模块
-└── protocol.cpp/h   # 协议定义（与客户端一致）
+qt-cloud-drive/
+├── Client/
+│   ├── main.cpp              # 程序入口，加载全局样式与图标
+│   ├── client.cpp/h          # TCP 连接管理、登录/注册窗口
+│   ├── index.cpp/h           # 主界面（侧边栏 + QStackedWidget）
+│   ├── file.cpp/h            # 文件管理（浏览、增删改、上传下载、安全检查）
+│   ├── friend.cpp/h          # 好友管理（列表、删除、聊天入口）
+│   ├── chat.cpp/h            # 实时聊天窗口
+│   ├── onlineuser.cpp/h      # 在线用户列表（双击添加好友）
+│   ├── uploader.cpp/h        # 多线程分片上传（QThread + 4096 字节分片）
+│   ├── reshandler.cpp/h      # 服务端响应分发（20+ 种消息类型）
+│   ├── protocol.cpp/h        # PDU 协议定义（结构体 + 消息枚举）
+│   ├── style.qss             # 全局 QSS 主题样式表
+│   ├── lsb.qrc               # 资源文件（配置 + 样式）
+│   └── icon.qrc              # 资源文件（图标）
+│
+├── Server/
+│   ├── main.cpp              # 程序入口（初始化数据库 + 启动 TCP 监听）
+│   ├── server.cpp/h          # 配置加载、AI Key 初始化
+│   ├── mytcpserver.cpp/h     # TCP 服务器（QTcpServer + 线程池 8 线程）
+│   ├── mytcpsocket.cpp/h     # 单连接消息收发与粘包拆包
+│   ├── clienttask.cpp/h      # 线程池 QRunnable 任务封装
+│   ├── msghandler.cpp/h      # 全部消息类型业务逻辑（20+ 种）
+│   ├── operatedb.cpp/h       # MySQL 数据库操作（参数化查询防注入）
+│   ├── filescanner.cpp/h     # 四层文件安全扫描（L1-L4）
+│   ├── aichecker.cpp/h       # AI 深度分析（DeepSeek API + 异步 HTTP）
+│   ├── winhttpclient.cpp/h   # WinHTTP HTTPS 封装（SChannel TLS）
+│   ├── logger.cpp/h          # 线程安全日志模块（单例 + QMutex）
+│   ├── protocol.cpp/h        # 协议定义（与客户端一致）
+│   ├── config.qrc            # 资源文件（嵌入 connect.config）
+│   ├── connect.config        # 服务端配置（IP/端口/存储路径/API Key）
+│   └── Server.pro            # Qt 项目文件
+│
+├── show/                     # 实验性 Qt 窗口 Demo
+└── README.md
 ```
 
 ---
