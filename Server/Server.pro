@@ -1,4 +1,4 @@
-QT       += core gui network sql
+QT       += core gui network sql concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,7 +16,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    aichecker.cpp \
+    winhttpclient.cpp \
     clienttask.cpp \
+    filescanner.cpp \
     main.cpp \
     msghandler.cpp \
     mytcpserver.cpp \
@@ -27,7 +30,10 @@ SOURCES += \
 
 
 HEADERS += \
+    aichecker.h \
+    winhttpclient.h \
     clienttask.h \
+    filescanner.h \
     msghandler.h \
     mytcpserver.h \
     mytcpsocket.h \
@@ -41,3 +47,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     config.qrc
+
+# WinHTTP for HTTPS (uses Windows SChannel, no OpenSSL needed)
+LIBS += -lwinhttp -lws2_32

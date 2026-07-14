@@ -48,8 +48,10 @@ private slots:
 
     void on_share_PB_clicked();
 
+    void on_securityScan_PB_clicked();
+
 private:
     Ui::File *ui;
 };
 
-#endif // FILE_H
+#endif

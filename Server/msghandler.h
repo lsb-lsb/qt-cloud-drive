@@ -15,6 +15,9 @@ public:
     qint64 m_iUploadFileSize;
     qint64 m_iUploadFileReceived;
     QFile m_fUploadFile;
+    QString m_strUploadFileName;
+    QString m_strUploadDirPath;
+
     MsgHandler();
     PDU* regist();
     PDU* login(QString& strLoginName);
@@ -34,6 +37,13 @@ public:
     PDU* downloadFile();
     PDU* shareFile();
 
+    PDU* securityScan();
+    PDU* unsafeFileDel();
+
+    PDU* aiAnalyze();
+    PDU* aiReport();
+
+    PDU* makeUnsafeNotify(const QString& strReason);
 };
 
-#endif // MSGHANDLER_H
+#endif

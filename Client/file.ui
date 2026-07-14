@@ -123,6 +123,19 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="securityScan_PB">
+       <property name="font">
+        <font>
+         <family>Agency FB</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>🔒 安全检查</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

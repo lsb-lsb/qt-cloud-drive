@@ -22,13 +22,14 @@ void OnlineUser::updateLW(QStringList userList)
 
 
 
+// 双击添加好友
 void OnlineUser::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
 {
     QString strCurName=Client::getInstance().m_strLoginName;
     QString strTarName=item->text();
     PDU* pdu=mkPDU();
     pdu->uiType=ENUM_TYPE_ADD_FRIEND_REQUEST;
-    memcpy(pdu->caData,strCurName.toStdString().c_str(),32);
-    memcpy(pdu->caData+32,strTarName.toStdString().c_str(),32);
+    memcpy(pdu->caData,strCurName.toUtf8().constData(),32);
+    memcpy(pdu->caData+32,strTarName.toUtf8().constData(),32);
     Client::getInstance().sendMsg(pdu);
 }

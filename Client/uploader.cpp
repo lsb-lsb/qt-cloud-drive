@@ -19,6 +19,7 @@ void Uploader::start()
     thread->start();
 }
 
+// 上传文件数据
 void Uploader::uploadFile()
 {
 
@@ -26,15 +27,18 @@ void Uploader::uploadFile()
     if(!file.open(QIODevice::ReadOnly)){
         emit errorMsg("打开文件失败");
         emit finished();
+        return;
     }
     while(true){
         PDU* datapdu=mkPDU(4096);
         datapdu->uiType=ENUM_TYPE_UPLOAD_FILE_DATA_REQUEST;
         qint64 ret=file.read(datapdu->caMsg,4096);
         if(ret==0){
+            free(datapdu);
             break;
         }
         if(ret<0){
+            free(datapdu);
             emit errorMsg("读取文件失败");
             return;
         }

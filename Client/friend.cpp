@@ -23,11 +23,12 @@ Friend::~Friend()
     delete m_pChat;
 }
 
+// 刷新好友列表
 void Friend::flushFriend()
 {
     PDU* pdu=mkPDU();
     pdu->uiType=ENUM_TYPE_FLUSH_FRIEND_REQUEST;
-    memcpy(pdu->caData,Client::getInstance().m_strLoginName.toStdString().c_str(),32);
+    memcpy(pdu->caData,Client::getInstance().m_strLoginName.toUtf8().constData(),32);
     Client::getInstance().sendMsg(pdu);
 }
 
@@ -37,19 +38,21 @@ void Friend::update_LW(QStringList friendList)
     ui->listWidget->addItems(friendList);
 }
 
+// 查找用户
 void Friend::on_findUser_PB_clicked()
 {
     QString strName=QInputDialog::getText(this,"提示","用户名：");
-    if(strName.isEmpty()||strName.toStdString().size()>32){
+    if(strName.isEmpty()||strName.toUtf8().size()>32){
         QMessageBox::warning(this,"提示","长度非法");
         return;
     }
     PDU* pdu=mkPDU();
-    memcpy(pdu->caData,strName.toStdString().c_str(),32);
+    memcpy(pdu->caData,strName.toUtf8().constData(),32);
     pdu->uiType=ENUM_TYPE_FIND_USER_REQUEST;
     Client::getInstance().sendMsg(pdu);
 }
 
+// 在线用户
 void Friend::on_onlineUser_PB_clicked()
 {
     if(m_pOnlineUser->isHidden()){
@@ -65,6 +68,7 @@ void Friend::on_flush_PB_clicked()
     flushFriend();
 }
 
+// 删除好友
 void Friend::on_del_PB_clicked()
 {
     QListWidgetItem* pItem=ui->listWidget->currentItem();
@@ -79,11 +83,14 @@ void Friend::on_del_PB_clicked()
     PDU* pdu=mkPDU(0);
     pdu->uiType=ENUM_TYPE_DEL_FRIEND_REQUEST;
     QString strCurName=Client::getInstance().m_strLoginName;
-    memcpy(pdu->caData,strCurName.toStdString().c_str(),strCurName.size());
-    memcpy(pdu->caData+32,strTarName.toStdString().c_str(),strTarName.size());
+    QByteArray baCur = strCurName.toUtf8();
+    QByteArray baTar = strTarName.toUtf8();
+    memcpy(pdu->caData, baCur.constData(), qMin(baCur.size(), 32));
+    memcpy(pdu->caData+32, baTar.constData(), qMin(baTar.size(), 32));
     Client::getInstance().sendMsg(pdu);
 }
 
+// 打开聊天窗口
 void Friend::on_chat_PB_clicked()
 {
     QListWidgetItem* pItem=ui->listWidget->currentItem();

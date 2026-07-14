@@ -14,6 +14,7 @@ MyTcpSocket::~MyTcpSocket()
     delete m_pmh;
 }
 
+// 发送PDU响应
 void MyTcpSocket::sendMsg(PDU *pdu)
 {
     if(pdu==NULL)return;
@@ -39,6 +40,7 @@ PDU *MyTcpSocket::readMsg()
     return pdu;
 }
 
+// 消息分派到各Handler
 PDU *MyTcpSocket::handleMsg(PDU *pdu)
 {
     qDebug()<<"handleMsg pdu->uiTotalLen"<<pdu->uiTotalLen
@@ -125,6 +127,22 @@ PDU *MyTcpSocket::handleMsg(PDU *pdu)
          respdu=m_pmh->shareFile();
          break;
    }
+    case ENUM_TYPE_SECURITY_SCAN_REQUEST:{
+         respdu=m_pmh->securityScan();
+         break;
+   }
+    case ENUM_TYPE_UNSAFE_FILE_DEL_REQUEST:{
+         respdu=m_pmh->unsafeFileDel();
+         break;
+   }
+    case ENUM_TYPE_AI_ANALYZE_REQUEST:{
+         respdu=m_pmh->aiAnalyze();
+         break;
+   }
+    case ENUM_TYPE_AI_REPORT_REQUEST:{
+         respdu=m_pmh->aiReport();
+         break;
+   }
     default:
         break;
     }
@@ -133,6 +151,7 @@ PDU *MyTcpSocket::handleMsg(PDU *pdu)
     return respdu;
 }
 
+// 接收并解析TCP消息
 void MyTcpSocket::recvMsg()
 {
    qDebug()<<"recvMsg 接受消息长度"<<this->bytesAvailable();
@@ -149,9 +168,10 @@ void MyTcpSocket::recvMsg()
    }
 }
 
+// 客户端离线
 void MyTcpSocket::clientOffline()
 {
-    OperateDB::getInstance().handleOffline(m_strLoginName.toStdString().c_str());
+    OperateDB::getInstance().handleOffline(m_strLoginName.toUtf8().constData());
     MyTcpServer::getInstance().removeSocket(this);
 
 }

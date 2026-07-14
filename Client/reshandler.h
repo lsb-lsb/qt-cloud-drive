@@ -29,6 +29,12 @@ public:
     void downloadFile();
     void shareFile();
 
+    void securityScan();
+    void unsafeFileNotify();
+
+    void aiAnalyze();
+    void aiReport();
+
 };
 
-#endif // RESHANDLER_H
+#endif

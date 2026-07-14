@@ -2,6 +2,7 @@
 #include "index.h"
 #include "reshandler.h"
 #include "string.h"
+#include <QDataStream>
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -10,6 +11,7 @@ ResHandler::ResHandler()
 
 }
 
+// 注册响应
 void ResHandler::regist()
 {
     bool ret;
@@ -23,6 +25,7 @@ void ResHandler::regist()
 
 }
 
+// 登录响应
 void ResHandler::login()
 {
     bool ret;
@@ -37,6 +40,7 @@ void ResHandler::login()
     }
 }
 
+// 查找用户响应
 void ResHandler::findUser()
 {
     int ret;
@@ -55,6 +59,7 @@ void ResHandler::findUser()
     }
 }
 
+// 在线用户响应
 void ResHandler::onlineUser()
 {
     uint uiSize=pdu->uiMsgLen/32;
@@ -62,11 +67,12 @@ void ResHandler::onlineUser()
     QStringList userList;
     for (uint i=0;i<uiSize;i++) {
        memcpy(caTmp,pdu->caMsg+i*32,32);
-       userList.append(caTmp);
+       userList.append(QString::fromUtf8(caTmp));
     }
     Index::getInstance().getFriend()->m_pOnlineUser->updateLW(userList);
 }
 
+// 添加好友响应
 void ResHandler::addFriend()
 {
     int ret;
@@ -82,11 +88,12 @@ void ResHandler::addFriend()
     }
 }
 
+// 好友请求转发
 void ResHandler::addFriendResend()
 {
     char caName[32]={'\0'};
     memcpy(caName,pdu->caData,32);
-    int ret=QMessageBox::question(&Index::getInstance(),"添加好友",QString("是否同意 %1 的添加好友请求？").arg(caName));
+    int ret=QMessageBox::question(&Index::getInstance(),"添加好友",QString("是否同意 %1 的添加好友请求？").arg(QString::fromUtf8(caName)));
     if(ret!=QMessageBox::Yes){
         return;
     }
@@ -96,6 +103,7 @@ void ResHandler::addFriendResend()
     Client::getInstance().sendMsg(respdu);
 }
 
+// 同意好友响应
 void ResHandler::addFriendAgree()
 {
     bool ret;
@@ -108,6 +116,7 @@ void ResHandler::addFriendAgree()
     }
 }
 
+// 刷新好友响应
 void ResHandler::flushFriend()
 {
     QStringList friendList;
@@ -115,11 +124,12 @@ void ResHandler::flushFriend()
     char caTmp[32]={'\0'};
     for(int i=0;i<iSize;i++){
        memcpy(caTmp,pdu->caMsg+i*32,32);
-       friendList.append(caTmp);
+       friendList.append(QString::fromUtf8(caTmp));
     }
     Index::getInstance().getFriend()->update_LW(friendList);
 }
 
+// 删除好友响应
 void ResHandler::delFriend()
 {
     bool ret;
@@ -132,6 +142,7 @@ void ResHandler::delFriend()
     }
 }
 
+// 聊天消息响应
 void ResHandler::chat()
 {
    Chat* c=Index::getInstance().getFriend()->m_pChat;
@@ -140,11 +151,12 @@ void ResHandler::chat()
    }
    char caChatName[32]={'\0'};
    memcpy(caChatName,pdu->caData,32);
-   c->updateShow_TE(QString("%1 : %2").arg(caChatName).arg(pdu->caMsg));
+   c->updateShow_TE(QString("%1 : %2").arg(QString::fromUtf8(caChatName)).arg(QString::fromUtf8(pdu->caMsg)));
    c->m_strChatName=caChatName;
    c->setWindowTitle(QString("与 %1 聊天中").arg(caChatName));
 }
 
+// 创建文件夹响应
 void ResHandler::mkdir()
 {
     bool ret;
@@ -157,6 +169,7 @@ void ResHandler::mkdir()
     }
 }
 
+// 刷新文件响应
 void ResHandler::flushFile()
 {
     int iCount=pdu->uiMsgLen/sizeof (FileInfo);
@@ -170,6 +183,7 @@ void ResHandler::flushFile()
     Index::getInstance().getFile()->updateFileList(pFileInfoList);
 }
 
+// 删除文件响应
 void ResHandler::delFile()
 {
     bool ret;
@@ -182,6 +196,7 @@ void ResHandler::delFile()
     }
 }
 
+// 重命名响应
 void ResHandler::renameFile()
 {
     bool ret;
@@ -194,6 +209,7 @@ void ResHandler::renameFile()
     }
 }
 
+// 上传初始化响应
 void ResHandler::uploadFileInit()
 {
     bool ret;
@@ -206,12 +222,14 @@ void ResHandler::uploadFileInit()
     }
 }
 
+// 上传完成响应
 void ResHandler::uploadFileData()
 {
     QMessageBox::information(&Index::getInstance(),"提示","上传文件完成");
     Index::getInstance().getFile()->flushFile();
 }
 
+// 下载文件响应
 void ResHandler::downloadFile()
 {
     qint64 iFileSize=0;
@@ -223,7 +241,7 @@ void ResHandler::downloadFile()
     }
     char caFileName[32]={'\0'};
     memcpy(caFileName,pdu->caData+sizeof(qint64),32);
-    QString strFileName=QString(caFileName);
+    QString strFileName=QString::fromUtf8(caFileName);
     qDebug()<<"downloadFile fileName:"<<strFileName;
 
     QString strSavePath=QFileDialog::getSaveFileName(&Index::getInstance(),"保存文件",strFileName);
@@ -240,6 +258,7 @@ void ResHandler::downloadFile()
     QMessageBox::information(&Index::getInstance(),"提示","下载文件成功");
 }
 
+// 分享文件响应
 void ResHandler::shareFile()
 {
     bool ret;
@@ -250,4 +269,122 @@ void ResHandler::shareFile()
     }else{
         QMessageBox::information(&Index::getInstance(),"提示","分享文件失败");
     }
+}
+
+// 不安全文件通知
+void ResHandler::unsafeFileNotify()
+{
+    QString strReason = QString::fromUtf8(pdu->caMsg, pdu->uiMsgLen);
+    qDebug() << "unsafeFileNotify:" << strReason;
+    QMessageBox::warning(&Index::getInstance(), "⚠ 安全警告",
+                         QString("操作被安全策略拦截：\n\n%1\n\n该文件可能包含安全风险，已阻止操作。").arg(strReason));
+}
+
+// 安全检查响应
+void ResHandler::securityScan()
+{
+    QByteArray ba(pdu->caMsg, pdu->uiMsgLen);
+    QDataStream stream(ba);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
+    quint32 uiCount = 0;
+    stream >> uiCount;
+
+    qDebug() << "securityScan 文件数量:" << uiCount;
+
+    if (uiCount == 0) {
+        QMessageBox::information(&Index::getInstance(), "安全检查",
+                                 "未发现安全风险，规则扫描(L1-L4)全部通过。");
+    } else {
+        QStringList riskLines;
+        QStringList riskPaths;
+        for (quint32 i = 0; i < uiCount; i++) {
+            quint32 uiPathLen = 0;
+            stream >> uiPathLen;
+            QByteArray baPath(uiPathLen, '\0');
+            stream.readRawData(baPath.data(), uiPathLen);
+
+            qint32 iRiskLevel = 0;
+            stream >> iRiskLevel;
+
+            quint32 uiReasonLen = 0;
+            stream >> uiReasonLen;
+            QByteArray baReason(uiReasonLen, '\0');
+            stream.readRawData(baReason.data(), uiReasonLen);
+
+            QString strPath = QString::fromUtf8(baPath);
+            QString strReason = QString::fromUtf8(baReason);
+
+            QString strLevel;
+            if (iRiskLevel == 3) strLevel = "高危";
+            else if (iRiskLevel == 2) strLevel = "中危";
+            else strLevel = "低危";
+
+            riskLines.append(QString("%1 | %2 | %3").arg(strLevel, strPath, strReason));
+            riskPaths.append(strPath);
+        }
+
+        QString strReport = QString("发现 %1 个不安全文件:\n\n").arg(uiCount) + riskLines.join("\n");
+        int ret = QMessageBox::warning(&Index::getInstance(), "安全检查结果",
+                                        strReport + "\n\n是否删除这些不安全文件？",
+                                        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+
+        if (ret == QMessageBox::Yes) {
+            QString strUserPath = Index::getInstance().getFile()->m_strUserPath;
+            for (const QString& strRelPath : riskPaths) {
+                QString strFullPath = strUserPath + "/" + strRelPath;
+                QByteArray baFullPath = strFullPath.toUtf8();
+                PDU* delPdu = mkPDU(baFullPath.size() + 1);
+                delPdu->uiType = ENUM_TYPE_UNSAFE_FILE_DEL_REQUEST;
+                memcpy(delPdu->caMsg, baFullPath.data(), baFullPath.size());
+                Client::getInstance().sendMsg(delPdu);
+            }
+            QMessageBox::information(&Index::getInstance(), "提示",
+                                     QString("已删除 %1 个不安全文件，正在刷新...").arg(uiCount));
+            Index::getInstance().getFile()->flushFile();
+        }
+    }
+
+    int aiRet = QMessageBox::question(&Index::getInstance(), "AI 智能分析",
+                                       "是否使用 AI 对所有文件进行深度扫描？\n\n"
+                                       "AI 可以检测规则扫描无法发现的内容:\n"
+                                       "- 身份证号、银行卡号、手机号\n"
+                                       "- 密码、API 密钥、Token 令牌\n"
+                                       "- 敏感信息泄露\n\n"
+                                       "（需在服务端配置 API Key）",
+                                       QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (aiRet == QMessageBox::Yes) {
+        QString strUserPath = Index::getInstance().getFile()->m_strUserPath;
+        QByteArray baPath = strUserPath.toUtf8();
+        PDU* aiPdu = mkPDU(baPath.size() + 1);
+        aiPdu->uiType = ENUM_TYPE_AI_ANALYZE_REQUEST;
+        memcpy(aiPdu->caMsg, baPath.data(), baPath.size());
+        Client::getInstance().sendMsg(aiPdu);
+    }
+}
+
+// AI分析响应
+void ResHandler::aiAnalyze()
+{
+    QString strResult = QString::fromUtf8(pdu->caMsg, pdu->uiMsgLen);
+    qDebug() << "aiAnalyze result:" << strResult.left(200);
+
+    bool hasDeletion = strResult.contains("已自动删除") || strResult.contains("已删除");
+
+    if (hasDeletion) {
+        QMessageBox::warning(&Index::getInstance(), "AI 深度扫描 — 发现高危文件",
+                             strResult + "\n\n⚠ 以上高危文件已被自动删除。");
+    } else {
+        QMessageBox::information(&Index::getInstance(), "AI 深度扫描报告", strResult);
+    }
+
+    Index::getInstance().getFile()->flushFile();
+}
+
+// AI报告响应
+void ResHandler::aiReport()
+{
+    QString strResult = QString::fromUtf8(pdu->caMsg, pdu->uiMsgLen);
+    qDebug() << "aiReport result:" << strResult.left(200);
+    QMessageBox::information(&Index::getInstance(), "AI 安全报告", strResult);
 }

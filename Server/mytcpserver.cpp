@@ -8,6 +8,7 @@ MyTcpServer &MyTcpServer::getInstance()
     return instance;
 }
 
+// 新客户端连接
 void MyTcpServer::incomingConnection(qintptr handle)
 {
     qDebug()<<"新客户端连接";
@@ -27,13 +28,14 @@ void MyTcpServer::removeSocket(MyTcpSocket *mySocket)
 
 }
 
+// 转发消息给目标用户
 void MyTcpServer::resend(char *caTarName, PDU *pdu)
 {
     if(caTarName==NULL||pdu==NULL){
         return;
     }
     for(int i=0;i<m_tcpSocketList.size();i++){
-        if(QString::fromLocal8Bit(caTarName,32) == m_tcpSocketList[i]->m_strLoginName){
+        if(QString::fromUtf8(caTarName,32) == m_tcpSocketList[i]->m_strLoginName){
             m_tcpSocketList[i]->write((char*)pdu,pdu->uiTotalLen);
             qDebug()<<"resend pdu->uiTotalLen"<<pdu->uiTotalLen
                     <<"pdu->uiMsgLen"<<pdu->uiMsgLen

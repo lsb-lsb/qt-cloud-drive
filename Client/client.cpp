@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QHostAddress>
 #include <QMessageBox>
+#include <QRegExp>
 Client::Client(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Client)
@@ -35,7 +36,7 @@ void Client::loadConfig()
     QByteArray baData=file.readAll();
     QString strData=QString(baData);
     qDebug()<<"strData"<<strData;
-    QStringList strList=strData.split("\r\n");
+    QStringList strList=strData.split(QRegExp("[\r\n]+"), QString::SkipEmptyParts);
     m_strIP=strList[0];
     m_usPort=strList[1].toUShort();
     m_strRootPath=strList[2];
@@ -73,6 +74,7 @@ PDU *Client::readMsg()
     return pdu;
 }
 
+// 消息分派
 void Client::handleMsg(PDU *pdu)
 {
     qDebug()<<"handleMsg pdu->uiTotalLen"<<pdu->uiTotalLen
@@ -155,16 +157,34 @@ void Client::handleMsg(PDU *pdu)
         m_prh->shareFile();
         break;
     }
+    case ENUM_TYPE_SECURITY_SCAN_RESPOND:{
+        m_prh->securityScan();
+        break;
+    }
+    case ENUM_TYPE_UNSAFE_FILE_NOTIFY:{
+        m_prh->unsafeFileNotify();
+        break;
+    }
+    case ENUM_TYPE_AI_ANALYZE_RESPOND:{
+        m_prh->aiAnalyze();
+        break;
+    }
+    case ENUM_TYPE_AI_REPORT_RESPOND:{
+        m_prh->aiReport();
+        break;
+    }
     default:
         break;
     }
 }
 
+// TCP连接成功
 void Client::showConnect()
 {
     qDebug()<<"连接成功";
 }
 
+// 接收TCP消息
 void Client::recvMsg()
 {
     qDebug()<<"recvMsg 接受消息长度"<<m_socket.bytesAvailable();
@@ -184,9 +204,9 @@ void Client::recvMsg()
 //void Client::on_send_PB_clicked()
 //{
 //   QString strMsg=ui->input_LE->text();
-//    PDU *pdu=mkPDU(strMsg.toStdString().size());
+//    PDU *pdu=mkPDU(strMsg.toUtf8().size());
 //    pdu->uiType=ENUM_TYPE_REGIST_REQUEST;
-//    memcpy(pdu->caMsg,strMsg.toStdString().c_str(),strMsg.toStdString().size());
+//    memcpy(pdu->caMsg,strMsg.toUtf8().constData(),strMsg.toUtf8().size());
 //    m_socket.write((char*)pdu,pdu->uiTotalLen);
 //    qDebug() << "send msg pdu->uiTotalLen"<<pdu->uiTotalLen
 //           << "pdu->uiMsgLen"<<pdu->uiMsgLen
@@ -200,33 +220,35 @@ void Client::recvMsg()
 
 
 
+// 注册
 void Client::on_regist_PB_clicked()
 {
    QString strName= ui->name_LE->text();
    QString strPwd= ui->pwd_LE->text();
-   if(strName.isEmpty()||strPwd.isEmpty()||strName.toStdString().size()>32||strPwd.toStdString().size()>32){
+   if(strName.isEmpty()||strPwd.isEmpty()||strName.toUtf8().size()>32||strPwd.toUtf8().size()>32){
        QMessageBox::warning(this,"注册","用户名或密码长度非法");
        return;
    }
    PDU* pdu=mkPDU();
-   memcpy(pdu->caData,strName.toStdString().c_str(),32);
-   memcpy(pdu->caData+32,strPwd.toStdString().c_str(),32);
+   memcpy(pdu->caData,strName.toUtf8().constData(),32);
+   memcpy(pdu->caData+32,strPwd.toUtf8().constData(),32);
    pdu->uiType=ENUM_TYPE_REGIST_REQUEST;
    sendMsg(pdu);
 }
 
+// 登录
 void Client::on_login_PB_clicked()
 {
     QString strName= ui->name_LE->text();
     QString strPwd= ui->pwd_LE->text();
-    if(strName.isEmpty()||strPwd.isEmpty()||strName.toStdString().size()>32||strPwd.toStdString().size()>32){
+    if(strName.isEmpty()||strPwd.isEmpty()||strName.toUtf8().size()>32||strPwd.toUtf8().size()>32){
         QMessageBox::warning(this,"登录","用户名或密码长度非法");
         return;
     }
     m_strLoginName=strName;
     PDU* pdu=mkPDU();
-    memcpy(pdu->caData,strName.toStdString().c_str(),32);
-    memcpy(pdu->caData+32,strPwd.toStdString().c_str(),32);
+    memcpy(pdu->caData,strName.toUtf8().constData(),32);
+    memcpy(pdu->caData+32,strPwd.toUtf8().constData(),32);
     pdu->uiType=ENUM_TYPE_LOGIN_REQUEST;
     sendMsg(pdu);
 }
